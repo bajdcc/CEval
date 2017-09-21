@@ -15,13 +15,34 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="stdafx.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="targetver.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="common\ref_string\RefStringBase.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="common\ref_string\RefStringIterator.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="common\ref_string\RefStringMatcher.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CEval.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="RefStringBase.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="RefStringIterator.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="RefStringMatcher.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ModRmbLexer.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -29,8 +50,35 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="common\ref_string\RefStringBase.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="common\ref_string\RefStringIterator.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="common\ref_string\RefStringMatcher.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
     <ClCompile Include="CEval.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="RefStringBase.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="RefStringIterator.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="RefStringMatcher.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ModRmbLexer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\README.md" />
   </ItemGroup>
 </Project>
