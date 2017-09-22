@@ -299,6 +299,7 @@ namespace cc_mod_rmb_lexer
         */
         void swapEnvironment(LexerStepType type, Env env);
 
+    public:
         string toString() override;
     };
 

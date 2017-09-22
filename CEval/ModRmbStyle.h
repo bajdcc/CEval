@@ -42,6 +42,7 @@ namespace cc_mod_rmb_style
     */
     class IStyleController : public Object
     {
+    public:
         /**
         * 创建实例
         * @param type 实例的类型

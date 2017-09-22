@@ -39,6 +39,9 @@
     <ClInclude Include="ModRmbStyle.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="ModRmbParser.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -63,6 +66,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="ModRmbStyle.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ModRmbParser.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

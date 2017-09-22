@@ -17,6 +17,36 @@ namespace cc_ref_string_base
         return "None";
     }
 
+    Integer::Integer(int n): n(n)
+    {
+    }
+
+    int Integer::value() const
+    {
+        return n;
+    }
+
+    string Integer::toString()
+    {
+        ostringstream oss;
+        oss << n;
+        return oss.str();
+    }
+
+    String::String(string s): s(s)
+    {
+    }
+
+    string String::value() const
+    {
+        return s;
+    }
+
+    string String::toString()
+    {
+        return s;
+    }
+
     cc_exception::cc_exception(string reason): reason(reason)
     {
     }
