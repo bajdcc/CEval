@@ -1,4 +1,4 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "ModRmbLexer.h"
 #include "ModRmbStyle.h"
 
@@ -32,7 +32,7 @@ namespace cc_mod_rmb_lexer
 
     int OneInst::getData() const
     {
-        return -1;
+        return data;
     }
 
     string OneInst::toString()
@@ -62,12 +62,17 @@ namespace cc_mod_rmb_lexer
         return steps.at(type);
     }
 
+    bool LexerStep::hasStep(LexerStepType type) const
+    {
+        return steps.find(type) != steps.end();
+    }
+
     Lexer::Lexer(string text, shared_ptr<IStyle> style): text(text), style(style)
     {
         auto factory = MatcherFactory::singleton();
         matchers.push_back(factory->createMatcher(MatcherFactory::LETTER));
-        matchers.push_back(factory->createMatcher(MatcherFactory::WORD));
         matchers.push_back(factory->createMatcher(MatcherFactory::NUMBER));
+        matchers.push_back(factory->createMatcher(MatcherFactory::WORD));
     }
 
     string Lexer::getText() const
@@ -92,10 +97,10 @@ namespace cc_mod_rmb_lexer
         {
             while (env.state != -1)
             {
-                // °´ÕÕµ±Ç°×´Ì¬£¬´ÓstepsÀïÃæÈ¡³öÏàÓ¦µÄÖ¸Áî£¬²¢ÇÒÔËĞĞÖ¸Áî
-                // µ±ÇÒ½öµ±Ö¸ÁîÎªstopÊ±£¬ÍË³ö
+                // æŒ‰ç…§å½“å‰çŠ¶æ€ï¼Œä»stepsé‡Œé¢å–å‡ºç›¸åº”çš„æŒ‡ä»¤ï¼Œå¹¶ä¸”è¿è¡ŒæŒ‡ä»¤
+                // å½“ä¸”ä»…å½“æŒ‡ä»¤ä¸ºstopæ—¶ï¼Œé€€å‡º
 
-                // ÔËĞĞ²½Öè
+                // è¿è¡Œæ­¥éª¤
                 if (!runStep(env))
                 {
                     break;
@@ -120,9 +125,9 @@ namespace cc_mod_rmb_lexer
                 break;
             }
             swapEnvironment(type, env);
-            vector<shared_ptr<ILexerInst>> insts = env.step->getStep(type);
-            if (!insts.empty())
+            if (env.step->hasStep(type))
             {
+                auto insts = env.step->getStep(type);
                 for (env.addr = 0; env.addr != -1 && env.addr < int(insts.size());)
                 {
                     env.inst = insts[env.addr];
@@ -213,7 +218,10 @@ namespace cc_mod_rmb_lexer
             env.state = inst->getData();
             break;
         case LOAD:
-            env.reg = env.scope.at(inst->getData());
+            {
+                auto f = env.scope.find(inst->getData());
+                env.reg = f != env.scope.end() ? f->second : 0;
+            }
             break;
         case MATCH:
             env.reg = matchers.at(env.reg)->match(env.ch);
@@ -243,10 +251,10 @@ namespace cc_mod_rmb_lexer
         return true;
     }
 
-    void Lexer::swapEnvironment(LexerStepType type, Env env)
+    void Lexer::swapEnvironment(LexerStepType type, Env& env)
     {
-        // È¡³öµ±Ç°²½Öè
-        static auto steps = style->getLexerStep();
+        // å–å‡ºå½“å‰æ­¥éª¤
+        auto steps = style->getLexerStep();
         switch (type)
         {
         case BEGIN:
@@ -254,14 +262,14 @@ namespace cc_mod_rmb_lexer
             env.step = steps.at(env.state);
             break;
         case CURRENT:
-            // ×¼±¸ºÃµ±Ç°×Ö·û
+            // å‡†å¤‡å¥½å½“å‰å­—ç¬¦
             env.ch = itText->current();
             env.index = itText->index();
             break;
         case END:
             break;
         case NEXT:
-            // ×¼±¸ºÃÏÂÒ»×Ö·û
+            // å‡†å¤‡å¥½ä¸‹ä¸€å­—ç¬¦
             env.ch = itText->ahead();
             env.index++;
             break;

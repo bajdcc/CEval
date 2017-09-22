@@ -64,7 +64,7 @@ namespace cc_mod_rmb_parser
             }
             else
             {
-                visit(visitor);
+                StoreableNode::visit(visitor);
             }
         }
         if (bag.visitEnd)
@@ -85,7 +85,28 @@ namespace cc_mod_rmb_parser
             }
             else
             {
-                visit(visitor);
+                StoreableNode::visit(visitor);
+            }
+        }
+        if (bag.visitEnd)
+        {
+            visitor->visitEnd(shared_from_this());
+        }
+    }
+
+    void DecimalNode::visit(shared_ptr<ITreeNodeVisitor> visitor)
+    {
+        VisitBag bag;
+        visitor->visitBegin(shared_from_this(), bag);
+        if (bag.visitChilren)
+        {
+            if (bag.visitReverse)
+            {
+                visitReverse(visitor);
+            }
+            else
+            {
+                StoreableNode::visit(visitor);
             }
         }
         if (bag.visitEnd)
@@ -106,7 +127,7 @@ namespace cc_mod_rmb_parser
             }
             else
             {
-                visit(visitor);
+                StoreableNode::visit(visitor);
             }
         }
         if (bag.visitEnd)
@@ -127,7 +148,7 @@ namespace cc_mod_rmb_parser
             }
             else
             {
-                visit(visitor);
+                StoreableNode::visit(visitor);
             }
         }
         if (bag.visitEnd)
@@ -148,7 +169,7 @@ namespace cc_mod_rmb_parser
             }
             else
             {
-                visit(visitor);
+                StoreableNode::visit(visitor);
             }
         }
         if (bag.visitEnd)
@@ -163,7 +184,7 @@ namespace cc_mod_rmb_parser
 
     void TreeNodeToString::visitBegin(shared_ptr<DotNode> node, VisitBag& bag)
     {
-        oss << node->get(DATA)->toString();
+        oss << char(dynamic_pointer_cast<Integer>(node->get(DATA))->value());
     }
 
     void TreeNodeToString::visitBegin(shared_ptr<DecimalNode> node, VisitBag& bag)
@@ -172,16 +193,19 @@ namespace cc_mod_rmb_parser
 
     void TreeNodeToString::visitBegin(shared_ptr<IntegerUnitNode> node, VisitBag& bag)
     {
-        oss << node->get(DATA)->toString();
+        if (!first)
+            oss << node->get(DATA)->toString();
     }
 
     void TreeNodeToString::visitBegin(shared_ptr<IntegerAtomNode> node, VisitBag& bag)
     {
-        oss << node->get(DATA)->toString();
+        if (first) first = false;
+        oss << char(dynamic_pointer_cast<Integer>(node->get(DATA))->value());
     }
 
     void TreeNodeToString::visitBegin(shared_ptr<DecimalAtomNode> node, VisitBag& bag)
     {
+        oss << char(dynamic_pointer_cast<Integer>(node->get(DATA))->value());
     }
 
     void TreeNodeToString::visitEnd(shared_ptr<IntegerNode> node)
@@ -280,38 +304,28 @@ namespace cc_mod_rmb_parser
     Parser::Parser(string text, shared_ptr<IStyle> style)
     {
         lexer = style->createLexer(text);
+    }
+
+    void Parser::parse()
+    {
         lexer->match();
         group = lexer->getGroup();
         normalizeGroup(3);
-        try
-        {
-            root = parse();
-        }
-        catch (cc_exception& e)
-        {
-            cerr << e.toString() << endl;
-        }
+        root = make_shared<StoreableNode>();
+        root->addNode(parseNode(INTEGER, group.at(INTEGER)), true);
+        root->addNode(parseNode(DOT, group.at(DOT)), true);
+        root->addNode(parseNode(DECIMAL, group.at(DECIMAL)), true);
     }
 
     void Parser::normalizeGroup(int count)
     {
-        auto results = group;
         for (int i = 0; i < count; i++)
         {
-            if (i >= int(results.size()))
+            if (i >= int(group.size()))
             {
-                results.push_back(make_shared<RefString>(getDefaultValue(i)));
+                group.push_back(make_shared<RefString>(getDefaultValue(i)));
             }
         }
-    }
-
-    shared_ptr<ITreeNode> Parser::parse()
-    {
-        auto node = make_shared<StoreableNode>();
-        node->addNode(parseNode(INTEGER, group.at(INTEGER)), true);
-        node->addNode(parseNode(DOT, group.at(DOT)), true);
-        node->addNode(parseNode(DECIMAL, group.at(DECIMAL)), true);
-        return node;
     }
 
     shared_ptr<ITreeNode> Parser::createNode(PartType type)
@@ -342,6 +356,132 @@ namespace cc_mod_rmb_parser
         ostringstream oss;
         oss << "Parser, " << lexer->toString();
         return oss.str();
+    }
+
+    RmbParser::RmbParser(string text) : Parser(text, StyleFactory::singleton()->createStyle(RMB))
+    {
+    }
+
+    string RmbParser::getDefaultValue(int id)
+    {
+        switch (id)
+        {
+        case INTEGER:
+            return "0";
+        case DOT:
+            return "";
+        case DECIMAL:
+            return "";
+        default:
+            break;
+        }
+        throw cc_exception("Invalid part_type id");
+    }
+
+    shared_ptr<IRefStringIterator> RmbParser::iterator(PartType type, shared_ptr<RefString> text)
+    {
+        switch (type)
+        {
+        case DECIMAL:
+            return text->iterator();
+        case DOT:
+            return text->iterator();
+        case INTEGER:
+            return text->reverse();
+        default:
+            return nullptr;
+        }
+    }
+
+    bool RmbParser::parseInternal(PartType type, shared_ptr<IRefStringIterator> iterator, shared_ptr<ITreeNode> node)
+    {
+        switch (type)
+        {
+        case DECIMAL:
+            return parseDecimal(iterator, node);
+        case DOT:
+            return parseDot(iterator, node);
+        case INTEGER:
+            return parseInteger(iterator, node);
+        default:
+            return false;
+        }
+    }
+
+    int RmbParser::getIntegerWithCheck(char ch, string message)
+    {
+        if (!isdigit(ch))
+        {
+            throw cc_exception(message);
+        }
+        return ch - '0';
+    }
+
+    bool RmbParser::parseDecimal(shared_ptr<IRefStringIterator> iterator, shared_ptr<ITreeNode> node)
+    {
+        if (iterator->available())
+        {
+            auto decimal = make_shared<DecimalAtomNode>();
+            node->addNode(decimal, true);
+            decimal->set(DATA, make_shared<Integer>(iterator->current()));
+            decimal->set(VALUE, make_shared<Integer>(getIntegerWithCheck(iterator->current(), "Decimal")));
+            iterator->next();
+            return iterator->available();
+        }
+        return false;
+    }
+
+    bool RmbParser::parseDot(shared_ptr<IRefStringIterator> iterator, shared_ptr<ITreeNode> node)
+    {
+        if (iterator->current() == '.')
+        {
+            node->set(DATA, make_shared<Integer>(iterator->current()));
+            iterator->next();
+            return iterator->available();
+        }
+        throw cc_exception("Dot");
+    }
+
+    bool RmbParser::parseInteger(shared_ptr<IRefStringIterator> iterator, shared_ptr<ITreeNode> node)
+    {
+        while (parseIntegerUnit(iterator, node));
+        return iterator->available();
+    }
+
+    bool RmbParser::parseIntegerUnit(shared_ptr<IRefStringIterator> iterator, shared_ptr<ITreeNode> node)
+    {
+        auto unit = make_shared<IntegerUnitNode>();
+        unit->set(DATA, make_shared<String>(","));
+        node->addNode(unit, false);
+        for (int i = 0; i < 4 && iterator->available(); i++)
+        {
+            auto atom = make_shared<IntegerAtomNode>();
+            atom->set(DATA, make_shared<Integer>(iterator->current()));
+            atom->set(VALUE, make_shared<Integer>(getIntegerWithCheck(iterator->current(), "Integer")));
+            iterator->next();
+            unit->addNode(atom, false);
+        }
+        return iterator->available();
+    }
+
+    void RmbParser::parse()
+    {
+        Parser::parse();
+        root->visit(make_shared<RmbTreeLevelVisitor>());
+    }
+
+    string RmbParser::toNumberString() const
+    {
+        auto visitor = make_shared<TreeNodeToString>();
+        root->visit(visitor);
+        return visitor->toString();
+    }
+
+    string RmbParser::toString()
+    {
+        auto visitor = make_shared<RmbTreeToString>();
+        root->visit(visitor);
+        return visitor->toString();
     }
 
     void RmbTreeToString::appendIntegerAtom(int data, int level)
@@ -474,126 +614,5 @@ namespace cc_mod_rmb_parser
     string RmbTreeToString::toString()
     {
         return oss.str();
-    }
-
-    RmbParser::RmbParser(string text): Parser(text, StyleFactory::singleton()->createStyle(RMB))
-    {
-        root->visit(make_shared<RmbTreeLevelVisitor>());
-    }
-
-    string RmbParser::getDefaultValue(int id)
-    {
-        switch (id)
-        {
-        case INTEGER:
-            return "0";
-        case DOT:
-            return "";
-        case DECIMAL:
-            return "";
-        default:
-            break;
-        }
-        throw cc_exception("Invalid part_type id");
-    }
-
-    shared_ptr<IRefStringIterator> RmbParser::iterator(PartType type, shared_ptr<RefString> text)
-    {
-        switch (type)
-        {
-        case DECIMAL:
-            return text->iterator();
-        case DOT:
-            return text->iterator();
-        case INTEGER:
-            return text->reverse();
-        default:
-            return nullptr;
-        }
-    }
-
-    bool RmbParser::parseInternal(PartType type, shared_ptr<IRefStringIterator> iterator, shared_ptr<ITreeNode> node)
-    {
-        switch (type)
-        {
-        case DECIMAL:
-            return parseDecimal(iterator, node);
-        case DOT:
-            return parseDot(iterator, node);
-        case INTEGER:
-            return parseInteger(iterator, node);
-        default:
-            return false;
-        }
-    }
-
-    int RmbParser::getIntegerWithCheck(char ch, string message)
-    {
-        if (!isdigit(ch))
-        {
-            throw cc_exception(message);
-        }
-        return ch - '0';
-    }
-
-    bool RmbParser::parseDecimal(shared_ptr<IRefStringIterator> iterator, shared_ptr<ITreeNode> node)
-    {
-        if (iterator->available())
-        {
-            auto decimal = make_shared<DecimalAtomNode>();
-            node->addNode(decimal, true);
-            decimal->set(DATA, make_shared<Integer>(iterator->current()));
-            decimal->set(VALUE, make_shared<Integer>(getIntegerWithCheck(iterator->current(), "Decimal")));
-            iterator->next();
-            return iterator->available();
-        }
-        return false;
-    }
-
-    bool RmbParser::parseDot(shared_ptr<IRefStringIterator> iterator, shared_ptr<ITreeNode> node)
-    {
-        if (iterator->current() == '.')
-        {
-            node->set(DATA, make_shared<Integer>(iterator->current()));
-            iterator->next();
-            return iterator->available();
-        }
-        throw cc_exception("Dot");
-    }
-
-    bool RmbParser::parseInteger(shared_ptr<IRefStringIterator> iterator, shared_ptr<ITreeNode> node)
-    {
-        while (parseIntegerUnit(iterator, node));
-        return iterator->available();
-    }
-
-    bool RmbParser::parseIntegerUnit(shared_ptr<IRefStringIterator> iterator, shared_ptr<ITreeNode> node)
-    {
-        auto unit = make_shared<IntegerUnitNode>();
-        unit->set(DATA, make_shared<String>(" "));
-        node->addNode(unit, false);
-        for (int i = 0; i < 4 && iterator->available(); i++)
-        {
-            auto atom = make_shared<IntegerAtomNode>();
-            atom->set(DATA, make_shared<Integer>(iterator->current()));
-            atom->set(VALUE, make_shared<Integer>(getIntegerWithCheck(iterator->current(), "Integer")));
-            iterator->next();
-            unit->addNode(atom, false);
-        }
-        return iterator->available();
-    }
-
-    string RmbParser::toNumberString() const
-    {
-        auto visitor = make_shared<TreeNodeToString>();
-        root->visit(visitor);
-        return visitor->toString();
-    }
-
-    string RmbParser::toString()
-    {
-        auto visitor = make_shared<RmbTreeToString>();
-        root->visit(visitor);
-        return visitor->toString();
     }
 }

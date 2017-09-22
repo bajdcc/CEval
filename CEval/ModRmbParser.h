@@ -216,26 +216,7 @@ namespace cc_mod_rmb_parser
     class DecimalNode : public StoreableNode, public enable_shared_from_this<DecimalNode>
     {
     public:
-        void visit(shared_ptr<ITreeNodeVisitor> visitor) override
-        {
-            VisitBag bag;
-            visitor->visitBegin(shared_from_this(), bag);
-            if (bag.visitChilren)
-            {
-                if (bag.visitReverse)
-                {
-                    visitReverse(visitor);
-                }
-                else
-                {
-                    visit(visitor);
-                }
-            }
-            if (bag.visitEnd)
-            {
-                visitor->visitEnd(shared_from_this());
-            }
-        }
+        void visit(shared_ptr<ITreeNodeVisitor> visitor) override;
     };
 
     /**
@@ -276,6 +257,7 @@ namespace cc_mod_rmb_parser
     {
     private:
         ostringstream oss;
+        bool first{ true };
     public:
         void visitBegin(shared_ptr<IntegerNode> node, VisitBag& bag) override;
         void visitBegin(shared_ptr<DotNode> node, VisitBag& bag) override;
@@ -337,6 +319,12 @@ namespace cc_mod_rmb_parser
     public:
         Parser(string text, shared_ptr<IStyle> style);
 
+        /**
+        * 生成树
+        * @return
+        */
+        virtual void parse();
+
     protected:
         /**
         * 设置默认值
@@ -372,12 +360,6 @@ namespace cc_mod_rmb_parser
         void normalizeGroup(int count);
 
         /**
-        * 生成树
-        * @return
-        */
-        shared_ptr<ITreeNode> parse();
-
-        /**
         * 结点创建工厂
         * @param type
         * @return
@@ -393,61 +375,7 @@ namespace cc_mod_rmb_parser
         */
         shared_ptr<ITreeNode> parseNode(PartType type, shared_ptr<RefString> text);
 
-        string toString() override;
-    };
-
-    /**
-    * 人民币翻译（结点序列化）
-    * @author bajdcc
-    */
-    class RmbTreeToString : public ITreeNodeVisitor
-    {
-    private:
-        vector<string> CN_ATOMS{"零", "壹", "贰", "叁", "肆", "伍", "陆", "柒", "捌", "玖",};
-        vector<string> CN_UNITS{"", "拾", "佰", "仟",};
-        vector<string> CN_DECIMALS{"", "角", "分",};
-        string CN_TEN_THOUSAND{"万"};
-        string CN_HUNDRED_MILLION{"亿"};
-        string CN_SYMBOL{"人民币"};
-        string CN_DOLLAR{"元"};
-        string CN_INTEGER{"整"};
-
-        ostringstream oss;
-
-        int unitZero{0};
-        int atomZero{0};
-
-    private:
-        /**
-        * 添加整数原子
-        * @param data 数字
-        * @param level 等级
-        */
-        void appendIntegerAtom(int data, int level);
-
-        /**
-        * 添加小数原子
-        * @param data 数字
-        * @param level 等级
-        */
-        void appendDecimalAtom(int data, int level);
-
-        void appendZero();
-
     public:
-        RmbTreeToString();
-        void visitBegin(shared_ptr<IntegerNode> node, VisitBag& bag) override;
-        void visitBegin(shared_ptr<DotNode> node, VisitBag& bag) override;
-        void visitBegin(shared_ptr<DecimalNode> node, VisitBag& bag) override;
-        void visitBegin(shared_ptr<IntegerUnitNode> node, VisitBag& bag) override;
-        void visitBegin(shared_ptr<IntegerAtomNode> node, VisitBag& bag) override;
-        void visitBegin(shared_ptr<DecimalAtomNode> node, VisitBag& bag) override;
-        void visitEnd(shared_ptr<IntegerNode> node) override;
-        void visitEnd(shared_ptr<DotNode> node) override;
-        void visitEnd(shared_ptr<DecimalNode> node) override;
-        void visitEnd(shared_ptr<IntegerUnitNode> node) override;
-        void visitEnd(shared_ptr<IntegerAtomNode> node) override;
-        void visitEnd(shared_ptr<DecimalAtomNode> node) override;
         string toString() override;
     };
 
@@ -515,7 +443,63 @@ namespace cc_mod_rmb_parser
         bool parseIntegerUnit(shared_ptr<IRefStringIterator> iterator, shared_ptr<ITreeNode> node);
 
     public:
+        void parse() override;
         string toNumberString() const;
+        string toString() override;
+    };
+
+    /**
+    * 人民币翻译（结点序列化）
+    * @author bajdcc
+    */
+    class RmbTreeToString : public ITreeNodeVisitor
+    {
+    private:
+        vector<string> CN_ATOMS{"零", "壹", "贰", "叁", "肆", "伍", "陆", "柒", "捌", "玖",};
+        vector<string> CN_UNITS{"", "拾", "佰", "仟",};
+        vector<string> CN_DECIMALS{"", "角", "分",};
+        string CN_TEN_THOUSAND{"万"};
+        string CN_HUNDRED_MILLION{"亿"};
+        string CN_SYMBOL{"人民币"};
+        string CN_DOLLAR{"元"};
+        string CN_INTEGER{"整"};
+
+        ostringstream oss;
+
+        int unitZero{0};
+        int atomZero{0};
+
+    private:
+        /**
+        * 添加整数原子
+        * @param data 数字
+        * @param level 等级
+        */
+        void appendIntegerAtom(int data, int level);
+
+        /**
+        * 添加小数原子
+        * @param data 数字
+        * @param level 等级
+        */
+        void appendDecimalAtom(int data, int level);
+
+        void appendZero();
+
+    public:
+        RmbTreeToString();
+        void visitBegin(shared_ptr<IntegerNode> node, VisitBag& bag) override;
+        void visitBegin(shared_ptr<DotNode> node, VisitBag& bag) override;
+        void visitBegin(shared_ptr<DecimalNode> node, VisitBag& bag) override;
+        void visitBegin(shared_ptr<IntegerUnitNode> node, VisitBag& bag) override;
+        void visitBegin(shared_ptr<IntegerAtomNode> node, VisitBag& bag) override;
+        void visitBegin(shared_ptr<DecimalAtomNode> node, VisitBag& bag) override;
+        void visitEnd(shared_ptr<IntegerNode> node) override;
+        void visitEnd(shared_ptr<DotNode> node) override;
+        void visitEnd(shared_ptr<DecimalNode> node) override;
+        void visitEnd(shared_ptr<IntegerUnitNode> node) override;
+        void visitEnd(shared_ptr<IntegerAtomNode> node) override;
+        void visitEnd(shared_ptr<DecimalAtomNode> node) override;
         string toString() override;
     };
 }

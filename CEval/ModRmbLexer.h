@@ -53,7 +53,7 @@ namespace cc_mod_rmb_lexer
     * 词法分析指令（零地址或一地址）
     * @author bajdcc
     */
-    class ILexerInst : Object
+    class ILexerInst : public Object
     {
     public:
         /**
@@ -153,6 +153,13 @@ namespace cc_mod_rmb_lexer
         * @return 指令集
         */
         virtual vector<shared_ptr<ILexerInst>> getStep(LexerStepType type) const = 0;
+
+        /**
+        * 判断步骤的指令是否存在
+        * @param type 第几个步骤
+        * @return 指令集
+        */
+        virtual bool hasStep(LexerStepType type) const = 0;
     };
 
     /**
@@ -166,8 +173,8 @@ namespace cc_mod_rmb_lexer
 
     public:
         void setStep(LexerStepType type, vector<shared_ptr<ILexerInst>> inst) override;
-
         vector<shared_ptr<ILexerInst>> getStep(LexerStepType type) const override;
+        bool hasStep(LexerStepType type) const override;
     };
 
 
@@ -247,7 +254,7 @@ namespace cc_mod_rmb_lexer
     using namespace cc_mod_rmb_style;
 
     /**
-    * 词法分析器
+    * RMB词法分析器
     *
     * @author bajdcc
     */
@@ -297,7 +304,7 @@ namespace cc_mod_rmb_lexer
         * @param env
         *            环境
         */
-        void swapEnvironment(LexerStepType type, Env env);
+        void swapEnvironment(LexerStepType type, Env& env);
 
     public:
         string toString() override;

@@ -363,7 +363,7 @@ namespace cc_ref_string_iterator
     {
     private:
         char matcher;
-        bool fnd;
+        bool fnd{false};
 
     public:
         FindFirstIterator(shared_ptr<IRefStringIterator> iterator, char matcher);
@@ -391,10 +391,10 @@ namespace cc_ref_string_iterator
     private:
         shared_ptr<IRefStringFindIterator> find;
 
-        int taken{ 1 };
+        int taken{1};
         int count;
-        bool start{ false };
-        bool stop{ false };
+        bool start{false};
+        bool stop{false};
 
     public:
         FindFirstTakeIterator(shared_ptr<IRefStringFindIterator> iterator, int count);
@@ -417,9 +417,9 @@ namespace cc_ref_string_iterator
     class TakeIterator : public RefStringIteratorBase
     {
     private:
-        int taken{ 1 };
+        int taken{1};
         int count;
-        bool stop{ false };
+        bool stop{false};
 
     public:
         TakeIterator(shared_ptr<IRefStringIterator> iterator, int count);
