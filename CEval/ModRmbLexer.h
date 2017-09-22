@@ -24,9 +24,9 @@ namespace cc_mod_rmb_lexer
     enum LexerInstType
     {
         // 基于字符串
-        IS_RECOEDING = 100,
+        IS_RECORDING = 100,
         IS_END,
-        BEGIN_RECODE,
+        BEGIN_RECORD,
         END_RECORD,
         JUMP_STATE,
         MATCH,

@@ -162,9 +162,10 @@ namespace cc_mod_rmb_lexer
     {
         auto inst = env.inst;
         auto type = inst->getType();
+        // 这里是匹配中精华的部分，指令的实现
         switch (type)
         {
-        case BEGIN_RECODE:
+        case BEGIN_RECORD: // 匹配开始，保存起始位置
             if (env.ref)
             {
                 throw cc_exception("Duplicated recoding");
@@ -172,77 +173,77 @@ namespace cc_mod_rmb_lexer
             env.ref = make_shared<RefString>(text);
             env.ref->setStart(env.index);
             break;
-        case END_RECORD:
+        case END_RECORD: // 匹配结束，保存结束位置
             if (env.ref)
             {
                 env.ref->setEnd(env.index);
-                env.ref->normalize();
-                group.push_back(env.ref);
-                env.ref.reset();
+                env.ref->normalize(); // 处理从右往左的情况
+                group.push_back(env.ref); // 保存匹配的内容
+                env.ref.reset(); // 重置，等待下次匹配
             }
             break;
-        case EXEC_PASS:
+        case EXEC_PASS: // 通过一个字符，遍历指针+1
             if (env.pass)
             {
                 env.pass = false;
-                itText->next();
+                itText->next(); // 下一个！
             }
             break;
-        case EXIT:
+        case EXIT: // 返回，不执行本阶段后面的指令
             env.jmp = true;
             env.addr = -1;
             break;
-        case EXIT_STEP:
+        case EXIT_STEP: // 返回并跳过当前阶段，在Jump_State后使用
             env.jmp = true;
             env.addr = -1;
             env.exitStep = true;
             break;
-        case IF:
+        case IF: // 判断reg是否是1，是1则跳转
             if (env.reg == 1)
             {
                 env.jmp = true;
                 env.addr = inst->getData();
             }
             break;
-        case IS_END:
+        case IS_END: // 是否到流末尾
             env.reg = itText->available() ? 0 : 1;
             break;
-        case IS_RECOEDING:
+        case IS_RECORDING: // 是否在记录
             env.reg = env.ref ? 1 : 0;
             break;
-        case JMP:
+        case JMP: // 跳转
             env.jmp = true;
             env.addr = inst->getData();
             break;
-        case JUMP_STATE:
+        case JUMP_STATE: // 状态转移
             env.state = inst->getData();
             break;
-        case LOAD:
+        case LOAD: // 从字典中读取数据，键为指令参数
             {
                 auto f = env.scope.find(inst->getData());
                 env.reg = f != env.scope.end() ? f->second : 0;
             }
             break;
-        case MATCH:
+        case MATCH: // 匹配当前字符，匹配编号在reg中，意味着必须跟在Mov指令后面
             env.reg = matchers.at(env.reg)->match(env.ch);
             break;
-        case MISSING:
+        case MISSING: // 报错指令
             throw cc_exception("Required: " + matchers.at(inst->getData())->toString());
-        case MOV:
+        case MOV: // 设置reg
             env.reg = inst->getData();
             break;
-        case NEG:
+        case NEG: // 取反
             env.reg = env.reg == 0 ? 1 : 0;
             break;
-        case PANIC:
+        case PANIC: // gg
             env.panic = true;
             break;
-        case PASS:
+        case PASS: // 通过，使得可以next
             env.pass = true;
             break;
         case STOP:
             return false;
-        case STORE:
+        case STORE: // 保存reg到字典中，键为指令参数
             env.scope.insert(make_pair(inst->getData(), env.reg));
             break;
         default:

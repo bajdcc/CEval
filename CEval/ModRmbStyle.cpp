@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "ModRmbStyle.h"
 
 
@@ -37,6 +37,8 @@ namespace cc_mod_rmb_style
         shared_ptr<ILexerStep> step;
         vector<shared_ptr<ILexerInst>> insts;
 
+        // 代码是N年前的了，所以下面的汇编等我想明白再写注释
+
         /* STATE 0 - Number */
         step = make_shared<LexerStep>();
         lexerSteps.push_back(step);
@@ -50,7 +52,7 @@ namespace cc_mod_rmb_style
         *   JumpState 2
         *   ExitStep
         */
-        /*[00]*/insts.push_back(InstFactory::createInst(IS_RECOEDING));
+        /*[00]*/insts.push_back(InstFactory::createInst(IS_RECORDING));
         /*[01]*/insts.push_back(InstFactory::createInst(IF, -1));
         /*[02]*/insts.push_back(InstFactory::createInst(MOV, 1));
         /*[03]*/insts.push_back(InstFactory::createInst(MATCH));
@@ -58,7 +60,7 @@ namespace cc_mod_rmb_style
         /*[05]*/insts.push_back(InstFactory::createInst(JUMP_STATE, 2));
         /*[06]*/insts.push_back(InstFactory::createInst(EXIT_STEP));
         /*[07]*/insts.push_back(InstFactory::createInst(PASS));
-        /*[08]*/insts.push_back(InstFactory::createInst(BEGIN_RECODE));
+        /*[08]*/insts.push_back(InstFactory::createInst(BEGIN_RECORD));
         step->setStep(CURRENT, insts);
         insts.clear();
         /**
@@ -113,7 +115,7 @@ namespace cc_mod_rmb_style
         step = make_shared<LexerStep>();
         lexerSteps.push_back(step);
         insts.clear();
-        insts.push_back(InstFactory::createInst(BEGIN_RECODE));
+        insts.push_back(InstFactory::createInst(BEGIN_RECORD));
         step->setStep(CURRENT, insts);
         insts.clear();
         insts.push_back(InstFactory::createInst(END_RECORD));
