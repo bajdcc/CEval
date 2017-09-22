@@ -145,6 +145,7 @@
   <ItemGroup>
     <ClInclude Include="CEval.h" />
     <ClInclude Include="ModRmbLexer.h" />
+    <ClInclude Include="ModRmbStyle.h" />
     <ClInclude Include="RefStringBase.h" />
     <ClInclude Include="RefStringIterator.h" />
     <ClInclude Include="RefStringMatcher.h" />
@@ -155,6 +156,7 @@
     <ClCompile Include="CEval.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ModRmbLexer.cpp" />
+    <ClCompile Include="ModRmbStyle.cpp" />
     <ClCompile Include="RefStringBase.cpp" />
     <ClCompile Include="RefStringIterator.cpp" />
     <ClCompile Include="RefStringMatcher.cpp" />

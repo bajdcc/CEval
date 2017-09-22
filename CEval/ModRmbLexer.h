@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include <iostream>
 #include <string>
 #include "RefStringBase.h"
 #include "RefStringIterator.h"
@@ -7,6 +8,11 @@
 using namespace std;
 using namespace cc_ref_string_base;
 using namespace cc_ref_string_iterator;
+
+namespace cc_mod_rmb_style
+{
+    class IStyle;
+}
 
 namespace cc_mod_rmb_lexer
 {
@@ -65,7 +71,7 @@ namespace cc_mod_rmb_lexer
     * 零地址
     * @author bajdcc
     */
-    class ZeroInst : ILexerInst
+    class ZeroInst : public ILexerInst
     {
     private:
         LexerInstType type;
@@ -83,7 +89,7 @@ namespace cc_mod_rmb_lexer
     * 一地址
     * @author bajdcc
     */
-    class OneInst : ZeroInst
+    class OneInst : public ZeroInst
     {
     private:
         int data;
@@ -104,7 +110,7 @@ namespace cc_mod_rmb_lexer
         * @param type
         * @return
         */
-        static shared_ptr<ZeroInst> createInst(LexerInstType type);
+        static shared_ptr<ILexerInst> createInst(LexerInstType type);
 
         /**
         * 创建一地址指令
@@ -112,7 +118,7 @@ namespace cc_mod_rmb_lexer
         * @param data
         * @return
         */
-        static shared_ptr<OneInst> createInst(LexerInstType type, int data);
+        static shared_ptr<ILexerInst> createInst(LexerInstType type, int data);
     };
 
     /**
@@ -133,6 +139,7 @@ namespace cc_mod_rmb_lexer
     */
     class ILexerStep : Object
     {
+    public:
         /**
         * 设置步骤的指令
         * @param type 步骤类型
@@ -170,6 +177,7 @@ namespace cc_mod_rmb_lexer
     */
     class Env
     {
+    public:
         /**
         * 当前状态
         */
@@ -234,5 +242,76 @@ namespace cc_mod_rmb_lexer
         * 全局存储空间
         */
         map<int, int> scope;
+    };
+
+    using namespace cc_mod_rmb_style;
+
+    /**
+    * 词法分析器
+    *
+    * @author bajdcc
+    */
+    class Lexer : Object
+    {
+    protected:
+        string text;
+        shared_ptr<IRefStringIterator> itText;
+        vector<shared_ptr<RefString>> group;
+        shared_ptr<IStyle> style;
+        vector<shared_ptr<ILexerMatcher>> matchers;
+
+    public:
+        Lexer(string text, shared_ptr<IStyle> style);
+
+        string getText() const;
+        shared_ptr<IStyle> getStyle() const;
+        vector<shared_ptr<RefString>> getGroup() const;
+
+        bool match();
+
+    private:
+        /**
+        * 运行步骤
+        *
+        * @param env
+        *            环境
+        * @return 是否终止
+        * @throws OperationNotSupportedException
+        */
+        bool runStep(Env& env);
+
+        /**
+        * 运行指令
+        *
+        * @param env
+        *            环境
+        * @throws Exception
+        */
+        bool runInst(Env& env);
+
+        /**
+        * 切换当前环境
+        *
+        * @param type
+        *            步骤类型
+        * @param env
+        *            环境
+        */
+        void swapEnvironment(LexerStepType type, Env env);
+
+        string toString() override;
+    };
+
+    /**
+    * RMB词法分析
+    * @author bajdcc
+    */
+    class RmbLexer : public Lexer
+    {
+    public:
+        RmbLexer(string string, shared_ptr<IStyle> style);
+
+    private:
+        static shared_ptr<IRefStringIterator> decorator(string text);
     };
 }
