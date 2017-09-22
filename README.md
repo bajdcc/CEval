@@ -1,5 +1,7 @@
 # 四则运算器（C++）
 
+[知乎专栏](https://zhuanlan.zhihu.com/p/29589948)
+
 看到[https://github.com/JosanSun/DesignPattern](https://github.com/JosanSun/DesignPattern)，有了些灵感，因为最近把jMiniLang玩得差不多了，有点腻了。
 
 重温一下设计模式，这也不是重新造轮子，不必用高大上的LR分析去弄。

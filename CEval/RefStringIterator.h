@@ -205,37 +205,13 @@ namespace cc_ref_string_iterator
         shared_ptr<RefString> ref;
 
     public:
-        RefStringReverseIterator(shared_ptr<RefString> ref): ptr(ref->length() - 1), ref(ref)
-        {
-        }
+        RefStringReverseIterator(shared_ptr<RefString> ref);
 
-        int index()
-        {
-            return ptr;
-        }
-
-        char current()
-        {
-            return ref->charAt(ptr);
-        }
-
-        char ahead()
-        {
-            return 0;
-        }
-
-        bool available()
-        {
-            return ptr >= 0;
-        }
-
-        void next()
-        {
-            if (ptr >= 0)
-            {
-                ptr--;
-            }
-        }
+        int index() override;
+        char current() override;
+        char ahead() override;
+        bool available() override;
+        void next() override;
     };
 
     /**

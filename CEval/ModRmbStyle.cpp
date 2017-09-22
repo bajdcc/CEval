@@ -50,24 +50,15 @@ namespace cc_mod_rmb_style
         *   JumpState 2
         *   ExitStep
         */
-        /*[00]*/
-        insts.push_back(InstFactory::createInst(IS_RECOEDING));
-        /*[01]*/
-        insts.push_back(InstFactory::createInst(IF, -1));
-        /*[02]*/
-        insts.push_back(InstFactory::createInst(MOV, 1));
-        /*[03]*/
-        insts.push_back(InstFactory::createInst(MATCH));
-        /*[04]*/
-        insts.push_back(InstFactory::createInst(IF, 7));
-        /*[05]*/
-        insts.push_back(InstFactory::createInst(JUMP_STATE, 2));
-        /*[06]*/
-        insts.push_back(InstFactory::createInst(EXIT_STEP));
-        /*[07]*/
-        insts.push_back(InstFactory::createInst(PASS));
-        /*[08]*/
-        insts.push_back(InstFactory::createInst(BEGIN_RECODE));
+        /*[00]*/insts.push_back(InstFactory::createInst(IS_RECOEDING));
+        /*[01]*/insts.push_back(InstFactory::createInst(IF, -1));
+        /*[02]*/insts.push_back(InstFactory::createInst(MOV, 1));
+        /*[03]*/insts.push_back(InstFactory::createInst(MATCH));
+        /*[04]*/insts.push_back(InstFactory::createInst(IF, 7));
+        /*[05]*/insts.push_back(InstFactory::createInst(JUMP_STATE, 2));
+        /*[06]*/insts.push_back(InstFactory::createInst(EXIT_STEP));
+        /*[07]*/insts.push_back(InstFactory::createInst(PASS));
+        /*[08]*/insts.push_back(InstFactory::createInst(BEGIN_RECODE));
         step->setStep(CURRENT, insts);
         insts.clear();
         /**
@@ -86,50 +77,28 @@ namespace cc_mod_rmb_style
         *     JumpState 3
         *     ExitStep
         */
-        /*[00]*/
-        insts.push_back(InstFactory::createInst(MOV, 1));
-        /*[01]*/
-        insts.push_back(InstFactory::createInst(MATCH));
-        /*[02]*/
-        insts.push_back(InstFactory::createInst(IF, 13));
-        /*[03]*/
-        insts.push_back(InstFactory::createInst(JMP, 15));
-        /*[04]*/
-        insts.push_back(InstFactory::createInst(MOV, 3));
-        /*[05]*/
-        insts.push_back(InstFactory::createInst(MATCH));
-        /*[06]*/
-        insts.push_back(InstFactory::createInst(IF, 10));
-        /*[07]*/
-        insts.push_back(InstFactory::createInst(JUMP_STATE, 3));
-        /*[08]*/
-        insts.push_back(InstFactory::createInst(PASS));
-        /*[09]*/
-        insts.push_back(InstFactory::createInst(EXIT_STEP));
-        /*[10]*/
-        insts.push_back(InstFactory::createInst(PASS));
-        /*[11]*/
-        insts.push_back(InstFactory::createInst(JUMP_STATE, 1));
-        /*[12]*/
-        insts.push_back(InstFactory::createInst(EXIT_STEP));
-        /*[13]*/
-        insts.push_back(InstFactory::createInst(PASS));
-        /*[14]*/
-        insts.push_back(InstFactory::createInst(EXIT));
-        /*[15]*/
-        insts.push_back(InstFactory::createInst(END_RECORD));
-        /*[16]*/
-        insts.push_back(InstFactory::createInst(LOAD, 100));
-        /*[17]*/
-        insts.push_back(InstFactory::createInst(IF, 19));
-        /*[18]*/
-        insts.push_back(InstFactory::createInst(JMP, 4));
-        /*[19]*/
-        insts.push_back(InstFactory::createInst(JUMP_STATE, 4));
-        /*[20]*/
-        insts.push_back(InstFactory::createInst(PASS));
-        /*[21]*/
-        insts.push_back(InstFactory::createInst(EXIT_STEP));
+        /*[00]*/insts.push_back(InstFactory::createInst(MOV, 1));
+        /*[01]*/insts.push_back(InstFactory::createInst(MATCH));
+        /*[02]*/insts.push_back(InstFactory::createInst(IF, 13));
+        /*[03]*/insts.push_back(InstFactory::createInst(JMP, 15));
+        /*[04]*/insts.push_back(InstFactory::createInst(MOV, 3));
+        /*[05]*/insts.push_back(InstFactory::createInst(MATCH));
+        /*[06]*/insts.push_back(InstFactory::createInst(IF, 10));
+        /*[07]*/insts.push_back(InstFactory::createInst(JUMP_STATE, 3));
+        /*[08]*/insts.push_back(InstFactory::createInst(PASS));
+        /*[09]*/insts.push_back(InstFactory::createInst(EXIT_STEP));
+        /*[10]*/insts.push_back(InstFactory::createInst(PASS));
+        /*[11]*/insts.push_back(InstFactory::createInst(JUMP_STATE, 1));
+        /*[12]*/insts.push_back(InstFactory::createInst(EXIT_STEP));
+        /*[13]*/insts.push_back(InstFactory::createInst(PASS));
+        /*[14]*/insts.push_back(InstFactory::createInst(EXIT));
+        /*[15]*/insts.push_back(InstFactory::createInst(END_RECORD));
+        /*[16]*/insts.push_back(InstFactory::createInst(LOAD, 100));
+        /*[17]*/insts.push_back(InstFactory::createInst(IF, 19));
+        /*[18]*/insts.push_back(InstFactory::createInst(JMP, 4));
+        /*[19]*/insts.push_back(InstFactory::createInst(JUMP_STATE, 4));
+        /*[20]*/insts.push_back(InstFactory::createInst(PASS));
+        /*[21]*/insts.push_back(InstFactory::createInst(EXIT_STEP));
         step->setStep(NEXT, insts);
         insts.clear();
         insts.push_back(InstFactory::createInst(EXEC_PASS));

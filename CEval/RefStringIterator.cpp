@@ -133,6 +133,38 @@ namespace cc_ref_string_iterator
         }
     }
 
+    RefStringReverseIterator::RefStringReverseIterator(shared_ptr<RefString> ref): ptr(ref->length() - 1), ref(ref)
+    {
+    }
+
+    int RefStringReverseIterator::index()
+    {
+        return ptr;
+    }
+
+    char RefStringReverseIterator::current()
+    {
+        return ref->charAt(ptr);
+    }
+
+    char RefStringReverseIterator::ahead()
+    {
+        return 0;
+    }
+
+    bool RefStringReverseIterator::available()
+    {
+        return ptr >= 0;
+    }
+
+    void RefStringReverseIterator::next()
+    {
+        if (ptr >= 0)
+        {
+            ptr--;
+        }
+    }
+
     RefStringIteratorBase::RefStringIteratorBase(shared_ptr<IRefStringIterator> iterator): iter(iterator)
     {
     }
