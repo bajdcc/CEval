@@ -137,7 +137,7 @@ namespace cc_mod_rmb_lexer
     * 词法分析的步骤
     * @author bajdcc
     */
-    class ILexerStep : Object
+    class ILexerStep : public Object
     {
     public:
         /**
@@ -258,7 +258,7 @@ namespace cc_mod_rmb_lexer
     *
     * @author bajdcc
     */
-    class Lexer : Object
+    class Lexer : public Object
     {
     protected:
         string text;

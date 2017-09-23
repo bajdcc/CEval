@@ -151,7 +151,7 @@ namespace cc_ref_string_iterator
     * 引用类型的字符串
     * @author bajdcc
     */
-    class RefString :public Object,public enable_shared_from_this<RefString>
+    class RefString : public Object, public enable_shared_from_this<RefString>
     {
     private:
         string ref;
@@ -177,7 +177,7 @@ namespace cc_ref_string_iterator
     * 简易迭代器
     * @author bajdcc
     */
-    class RefStringIterator :public RefStringIteratorDecorator
+    class RefStringIterator : public RefStringIteratorDecorator
     {
     private:
         int ptr{0};

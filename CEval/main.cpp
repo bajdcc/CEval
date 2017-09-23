@@ -2,17 +2,20 @@
 #include "RefStringBase.h"
 #include "ModRmbParser.h"
 
+using namespace cc_mod_rmb_parser;
 
 int main()
 {
     try
     {
-        auto parser = make_shared<cc_mod_rmb_parser::RmbParser>("000905000234.0678");
+        auto input = string("000905000234.0678");
+        cout << "Input: " << input << endl;
+        auto parser = make_shared<RmbParser>(input);
         parser->parse();
-        cout << parser->toNumberString() << endl;
-        cout << parser->toString() << endl;
+        cout << "Number Style: " << parser->toNumberString() << endl;
+        cout << "RMB Style: " << parser->toString() << endl;
     }
-    catch (cc_ref_string_base::cc_exception& e) {
+    catch (cc_exception& e) {
         cerr << "Error: " << e.toString() << endl;
     }
     return 0;

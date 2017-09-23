@@ -118,7 +118,7 @@ namespace cc_ref_string_matcher
         string toString() override;
     };
 
-    class IMatcherFactory : Object
+    class IMatcherFactory : public Object
     {
     public:
         enum LexerMatcherType
@@ -140,7 +140,7 @@ namespace cc_ref_string_matcher
     * 匹配器构造工厂
     * @author bajdcc
     */
-    class MatcherFactory :public IMatcherFactory
+    class MatcherFactory : public IMatcherFactory
     {
     private:
         static shared_ptr<IMatcherFactory> one;

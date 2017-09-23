@@ -89,7 +89,7 @@ namespace cc_mod_rmb_parser
     * 遍历结点的访问者
     * @author bajdcc
     */
-    class ITreeNodeVisitor : Object
+    class ITreeNodeVisitor : public Object
     {
     public:
         /**
