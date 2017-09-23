@@ -37,7 +37,7 @@ namespace cc_eval
             }
             else if (isspace(c)) // 空白字符
             {
-                type = next_space();
+                type = v_space;
             }
             else if (c == '\"') // 字符串
             {
@@ -74,6 +74,11 @@ namespace cc_eval
     string CEvalLexer::getId() const
     {
         return vId;
+    }
+
+    operator_t CEvalLexer::getOper() const
+    {
+        return vOper;
     }
 
     static double calc_exp(double d, int e)
@@ -116,7 +121,10 @@ namespace cc_eval
             has_dot = true;
         }
         else
-            throw cc_exception("invalid negative number");
+        {
+            vOper = op_sub;
+            return v_oper;
+        }
         for (;;)
         {
             c = iter->ahead();
@@ -194,31 +202,137 @@ namespace cc_eval
 
     value_t CEvalLexer::next_alpha()
     {
-        return v_error;
-    }
-
-    value_t CEvalLexer::next_space()
-    {
-        return v_error;
-    }
-
-    value_t CEvalLexer::next_char()
-    {
-        return v_error;
+        ostringstream oss;
+        oss << iter->current();
+        for (;;)
+        {
+            auto c = iter->ahead();
+            if (!(isalnum(c) || c == '_'))
+                break;
+            oss << c;
+            iter->next();
+        }
+        vId = oss.str();
+        return v_id;
     }
 
     value_t CEvalLexer::next_string()
     {
-        return v_error;
-    }
-
-    value_t CEvalLexer::next_comment()
-    {
-        return v_error;
+        iter->next();
+        ostringstream oss;
+        for (;;)
+        {
+            auto c = iter->current();
+            if (!c)
+                throw cc_exception("incomplete string");
+            if (c == '"')
+            {
+                vString = oss.str();
+                break;
+            }
+            if (c == '\\')
+            {
+                iter->next();
+                switch (iter->current())
+                {
+                case 'b':
+                    oss << '\b';
+                    break;
+                case 'f':
+                    oss << '\f';
+                    break;
+                case 'n':
+                    oss << '\n';
+                    break;
+                case 'r':
+                    oss << '\r';
+                    break;
+                case 't':
+                    oss << '\t';
+                    break;
+                case 'v':
+                    oss << '\v';
+                    break;
+                case '\'':
+                    oss << '\'';
+                    break;
+                case '\"':
+                    oss << '\"';
+                    break;
+                case '\\':
+                    oss << '\\';
+                    break;
+                case '0': // skip
+                    break;
+                case 'x':
+                case 'X':
+                {
+                    auto xx = iter->ahead(); // current = \\x, ahead = X1
+                    if (!isxdigit(xx))
+                        throw cc_exception("incomplete string escape \\xXX");
+                    auto n1 = xx <= '9' ? xx - '0' : ((xx | 0x20) - 'a');
+                    iter->next();
+                    xx = iter->ahead(); // current = X1, ahead = X2
+                    if (isxdigit(xx))
+                    {
+                        auto n2 = xx <= '9' ? xx - '0' : ((xx | 0x20) - 'a');
+                        iter->next();
+                        oss << char((n1 << 4) | n2);
+                    }
+                    else
+                    {
+                        oss << char(n1);
+                    }
+                }
+                    break;
+                default:
+                    throw cc_exception("incomplete string escape");
+                }
+            }
+            else
+            {
+                oss << c;
+            }
+            iter->next();
+        }
+        return v_string;
     }
 
     value_t CEvalLexer::next_operator()
     {
+        static map<char, operator_t> mapOper =
+        {
+            { '=', op_equ },
+            { '+', op_add },
+            { '-', op_sub },
+            { '*', op_mul },
+            { '/', op_div },
+            { '%', op_mod },
+            { '\\', op_esc },
+            { '?', op_ask },
+            { '%', op_mod },
+            { '&', op_and },
+            { '|', op_bar },
+            { '~', op_til },
+            { '^', op_xor },
+            { '!', op_exc },
+            { '(', op_lpa },
+            { ')', op_rpa },
+            { '[', op_lsq },
+            { ']', op_rsq },
+            { '{', op_lbr },
+            { '}', op_rbr },
+            { ',', op_com },
+            { '.', op_dot },
+            { ';', op_sem },
+            { ':', op_col },
+        };
+        auto op1 = mapOper.find(iter->current());
+        if (op1 != mapOper.end())
+        {
+            vOper = op1->second;
+            return v_oper;
+        }
         return v_error;
     }
 
