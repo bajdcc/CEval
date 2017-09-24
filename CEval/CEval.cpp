@@ -492,33 +492,36 @@ namespace cc_eval
         return "Error";
     }
 
+    string CEval::eval_output(const string& s)
+    {
+        cout << "Input: " << s << " ==> ";
+        auto r = eval(s);
+        if (r != "Error")
+            cout << r << endl;
+        return r;
+    }
+
     shared_ptr<Node> CEval::parse()
     {
-        // 暂时还没实现括号
+        // 准备实现括号
+
+        // 实话说，只用循环做LL分析还是头一次
+        // 没有用所谓的递归，好处就是不会爆栈
+        // 一共只用了一个线索结点，哈哈
+        vector<shared_ptr<OperNode>> rootStack; // 根结点栈
+        vector<shared_ptr<Node>> nodeStack; // 当前结点栈
 
         auto root = make_shared<OperNode>(op_nil); // 根结点父亲
         shared_ptr<Node> node; // 当前结点
+        auto value = v_error;
+        bool fetch_next = true;
         for (;;) // 我就不用递归
         {
-            auto value = nextValue();
+            if (fetch_next) // 当需要归约时，暂停输入
+                value = nextValue();
             if (value == v_end) // 求值
             {
-                if (!node)
-                    throw cc_exception("null expression");
-                if (node->type() == v_oper)
-                {
-                    auto op = node;
-                    for (;;)
-                    {
-                        auto op2 = eval_node(op_node(op));
-                        auto parent = op_node(op->parent.lock());
-                        if (parent->value() == op_nil)
-                            return op2;
-                        parent->addRight(op2);
-                        op = parent;
-                    }
-                }
-                return eval_node(node);
+                return simplify_node(node); // 处理尚未化简的表达式（层数<=2）
             }
             if (value == v_int) // 叶子
             {
@@ -583,6 +586,7 @@ namespace cc_eval
                                 old_op->addRight(new_op);
                                 node = new_op;
                                 // 置换好后，树变成右斜树，导致暂不可求值
+                                if (!fetch_next) fetch_next = true;
                             }
                             else // 否则就可以先结合并求值了，哈哈
                             {
@@ -590,11 +594,28 @@ namespace cc_eval
                                 // 计算二元表达式的值
                                 auto tmp_node = eval_node(old_op);
                                 // 新建new_op的结点，其将置换原表达式
-                                auto new_op = make_shared<OperNode>(op);
+                                //auto new_op = make_shared<OperNode>(op);
                                 // 构建op的新结点，左孩子为tmp_node，等待右孩子
-                                parent_op->addRight(new_op);
-                                new_op->addLeft(tmp_node);
-                                node = new_op;
+
+                                // 已改进，启用归约阶段，此时暂停输入
+                                if (parent_op->value() == op_nil) // 根了
+                                {
+                                    parent_op->addLeft(tmp_node);
+                                    node = tmp_node;
+                                }
+                                else
+                                {
+                                    parent_op->addRight(tmp_node);
+                                    node = parent_op;
+                                }
+                                // 这样的好处：不会生成很长的(斜)树
+                                // 如果不简化，如3-4*5*6+7时，
+                                // 处理"+"号就要从node向上回溯，直到遇到大于等于"-"优先级的结点
+                                // 还要将4*5*6从树上摘下，挂到"+7"的下面，太繁琐
+                                // 由此证明简化的思路还是可取的
+
+                                // 归约时不输入，设置flag
+                                fetch_next = false;
                             }
                         }
                         else
@@ -604,13 +625,41 @@ namespace cc_eval
                             new_op->addLeft(node);
                             parent_op->addLeft(new_op);
                             node = new_op;
+                            if (!fetch_next) fetch_next = true;
                         }
+                    }
+                    else if (op == op_lpa) // 左括号，入栈，保存现场
+                    {
+                        rootStack.push_back(root);
+                        nodeStack.push_back(node);
+                        root = make_shared<OperNode>(op_nil);
+                        node.reset();
+                    }
+                    else if (op == op_rpa) // 右括号，出栈，恢复现场，计算表达式
+                    {
+                        if (rootStack.empty())
+                            throw cc_exception(string("redundant op: ") + lexer->getValueString());
+                        // 处理尚未化简的表达式（层数<=2）
+                        auto exp = simplify_node(node); // 括号内的表达式一定会计算成值(叶子)
+                        root = rootStack.back(); rootStack.pop_back(); // 本层root没用了
+                        node = nodeStack.back(); nodeStack.pop_back();
+                        if (!node)
+                            root->addLeft(node = exp); // node是值而非操作符
+                        else if (node->type() == v_oper)
+                            op_node(node)->assertRightNull(string("required op but found evaluated value: ") + exp->toString())
+                            ->addRight(exp);
+                        else
+                            throw cc_exception(string("required op but found evaluated value: ") + exp->toString());
                     }
                     else
                     {
                         throw cc_exception(string("undefined operator: ") + lexer->getValueString());
                     }
                 }
+            }
+            else if (value == v_error)
+            {
+                throw cc_exception("lexer error");;
             }
         }
     }
@@ -760,6 +809,26 @@ namespace cc_eval
             throw cc_exception(string("cannot cast string to double: " + node->toString()));
         }
         throw cc_exception(string("cannot cast: " + node->toString()));
+    }
+
+    shared_ptr<Node> CEval::simplify_node(shared_ptr<Node> node)
+    {
+        if (!node)
+            throw cc_exception("null expression");
+        if (node->type() == v_oper)
+        {
+            auto op = node;
+            for (;;) // 由于简化机制，一般循环只执行2次
+            { // 最多就是3+5*5 [END]，再多输入的话，表达式依然会自动化简
+                auto op2 = eval_node(op_node(op));
+                auto parent = op_node(op->parent.lock());
+                if (parent->value() == op_nil)
+                    return op2;
+                parent->addRight(op2);
+                op = parent;
+            }
+        }
+        return eval_node(node);
     }
 
     value_t CEval::nextValue()

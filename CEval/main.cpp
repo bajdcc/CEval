@@ -18,27 +18,38 @@ int main()
 #ifdef TEST_PARSER
         {
             CEval eval;
-            assert(eval.eval("1") == "1");
-            assert(eval.eval("1.") == "1");
-            assert(eval.eval("1 + 2") == "3");
-            assert(eval.eval("1 -2") == "Error");
-            assert(eval.eval("1 - 2") == "-1");
-            assert(eval.eval("1 * -2") == "-2");
-            assert(eval.eval("5 / 2") == "2");
-            assert(eval.eval("5 / 0") == "Error");
-            assert(eval.eval("1 +") == "Error");
-            assert(eval.eval("e") == "Error");
-            assert(eval.eval("()") == "Error");
-            assert(eval.eval("\"") == "Error");
-            assert(eval.eval("\"aa\"") == "aa");
-            assert(eval.eval("\"aa\" + 123") == "aa123");
-            assert(eval.eval("\"aa\" + 123.4") == "aa123.4");
-            assert(eval.eval("1+ 123.4") == "124.4");
-            assert(eval.eval("1+ 4* 7") == "29");
-            assert(eval.eval("1+ 4* 7 -6*0") == "Error");
-            assert(eval.eval("1+ 4* 7 - 6*0") == "29");
-            assert(eval.eval("1+ 4* 7 - 6*") == "Error");
-            assert(eval.eval("1+ 4* 7 * -2 / 2 - -3* -3 *-3") == "0");
+            assert(eval.eval_output("1") == "1");
+            assert(eval.eval_output("1.") == "1");
+            assert(eval.eval_output("1 + 2") == "3");
+            assert(eval.eval_output("1 -2") == "Error");
+            assert(eval.eval_output("1 - 2") == "-1");
+            assert(eval.eval_output("1 * -2") == "-2");
+            assert(eval.eval_output("5 / 2") == "2");
+            assert(eval.eval_output("5 / 0") == "Error");
+            assert(eval.eval_output("1 +") == "Error");
+            assert(eval.eval_output("e") == "Error");
+            assert(eval.eval_output("()") == "Error");
+            assert(eval.eval_output("\"") == "Error");
+            assert(eval.eval_output("\"aa\"") == "aa");
+            assert(eval.eval_output("\"aa\" + 123") == "aa123");
+            assert(eval.eval_output("\"aa\" + 123.4") == "aa123.4");
+            assert(eval.eval_output("1+ 123.4") == "124.4");
+            assert(eval.eval_output("1+ 4* 7") == "29");
+            assert(eval.eval_output("1+ 4* 7 -6*0") == "Error");
+            assert(eval.eval_output("1+ 4* 7 - 6*0") == "29");
+            assert(eval.eval_output("1+ 4* 7 - 6*") == "Error");
+            assert(eval.eval_output("1+ 4* 7 * -2 / 2 - -3* -3 *-3") == "0");
+            assert(eval.eval_output("25 - 6* 1 + 3") == "22");
+            assert(eval.eval_output("(1 + 2)") == "3");
+            assert(eval.eval_output("(1)") == "1");
+            assert(eval.eval_output("(1 + )") == "Error");
+            assert(eval.eval_output("2 * (1 + 2)") == "6");
+            assert(eval.eval_output("(1 + 2) * 2") == "6");
+            assert(eval.eval_output("(1 + 2) * 2 - (3 - 1)") == "4");
+            assert(eval.eval_output("1+ 4* (7 * 1 - 1)") == "25");
+            assert(eval.eval_output("1+ 4* (7 * 1 - 1) - 6* (0 + 1) /2 + 3") == "25"); 
+            assert(eval.eval_output("(3 + 6)*(8 - -1)") == "81");
+            //TODO: need more test!!!
         }
 #endif
 #ifdef TEST_DOUBLE

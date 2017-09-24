@@ -179,6 +179,7 @@ namespace cc_eval
         ~CEval();
 
         string eval(const string &s);
+        string eval_output(const string &s);
     private:
         shared_ptr<Node> parse();
         shared_ptr<Node> eval_node(shared_ptr<Node> node);
@@ -186,6 +187,7 @@ namespace cc_eval
         shared_ptr<Node> eval_binop(operator_t op, value_t value, shared_ptr<Node> left, shared_ptr<Node> right);
         shared_ptr<OperNode> op_node(shared_ptr<Node> node);
         shared_ptr<Node> promote_node(shared_ptr<Node> node, value_t value);
+        shared_ptr<Node> simplify_node(shared_ptr<Node> node);
         value_t nextValue();
     private:
         static int calc_binop_prior(operator_t op);
