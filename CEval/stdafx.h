@@ -20,3 +20,4 @@
 #include <map>
 #include <vector>
 #include <cassert>
+#include <functional>

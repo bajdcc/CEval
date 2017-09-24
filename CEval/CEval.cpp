@@ -20,13 +20,14 @@ namespace cc_eval
     {
         // 词法分析参考：https://github.com/bajdcc/CParser/blob/master/CParser/Lexer.cpp
         auto c = iter->current();
+        nStart = iter->index();
         if (!c) // 末尾
         {
+            nEnd = iter->index();
             return type = v_end;
         }
         try
         {
-
             if (isalpha(c) || c == '_') // 变量名或关键字
             {
                 type = next_alpha();
@@ -53,6 +54,8 @@ namespace cc_eval
             cerr << "Lexer error: " << e.toString() << endl;
             type = v_error;
         }
+        nEnd = iter->index();
+        iter->next();
         return type;
     }
 
@@ -79,6 +82,11 @@ namespace cc_eval
     operator_t CEvalLexer::getOper() const
     {
         return vOper;
+    }
+
+    string CEvalLexer::getValueString() const
+    {
+        return ref->toString().substr(nStart, nEnd - nStart + 1);
     }
 
     static double calc_exp(double d, int e)
@@ -336,6 +344,119 @@ namespace cc_eval
         return v_error;
     }
 
+    IntegerNode::IntegerNode(int n): n(n)
+    {
+    }
+
+    int IntegerNode::value() const
+    {
+        return n;
+    }
+
+    value_t IntegerNode::type() const
+    {
+        return v_int;
+    }
+
+    string IntegerNode::toString()
+    {
+        ostringstream oss;
+        oss << n;
+        return oss.str();
+    }
+
+    DoubleNode::DoubleNode(double d): d(d)
+    {
+    }
+
+    double DoubleNode::value() const
+    {
+        return d;
+    }
+
+    value_t DoubleNode::type() const
+    {
+        return v_double;
+    }
+
+    string DoubleNode::toString()
+    {
+        ostringstream oss;
+        oss << d;
+        return oss.str();
+    }
+
+    StringNode::StringNode(string s): s(s)
+    {
+    }
+
+    string StringNode::value() const
+    {
+        return s;
+    }
+
+    value_t StringNode::type() const
+    {
+        return v_string;
+    }
+
+    string StringNode::toString()
+    {
+        return s;
+    }
+
+    IdNode::IdNode(string id): id(id)
+    {
+    }
+
+    string IdNode::value() const
+    {
+        return id;
+    }
+
+    value_t IdNode::type() const
+    {
+        return v_id;
+    }
+
+    string IdNode::toString()
+    {
+        return id;
+    }
+
+    OperNode::OperNode(operator_t oper): oper(oper)
+    {
+    }
+
+    operator_t OperNode::value() const
+    {
+        return oper;
+    }
+
+    value_t OperNode::type() const
+    {
+        return v_oper;
+    }
+
+    string OperNode::toString()
+    {
+        ostringstream oss;
+        oss << oper;
+        return oss.str();
+    }
+
+    void OperNode::addLeft(shared_ptr<Node> child)
+    {
+        left = child;
+        child->parent = shared_from_this();
+    }
+
+    void OperNode::addRight(shared_ptr<Node> child)
+    {
+        right = child;
+        child->parent = shared_from_this();
+    }
+
     CEval::CEval()
     {
     }
@@ -345,8 +466,289 @@ namespace cc_eval
     {
     }
 
-    shared_ptr<Object> CEval::eval(const string& s)
+    string CEval::eval(const string& s)
     {
-        return nullptr;
+        try
+        {
+            lexer = make_shared<CEvalLexer>(s);
+            return eval_string(parse());
+        }
+        catch (cc_exception& e)
+        {
+            cerr << "Parser error: " << e.toString() << endl;
+        }
+        return "Error";
+    }
+
+    shared_ptr<Node> CEval::parse()
+    {
+        // 暂时还没实现括号
+
+        auto root = make_shared<OperNode>(op_nil); // 根结点父亲
+        shared_ptr<Node> node; // 当前结点
+        for (;;) // 我就不用递归
+        {
+            auto value = nextValue();
+            if (value == v_end) // 求值
+            {
+                if (!node)
+                    throw cc_exception("null expression");
+                if (node->type() == v_oper)
+                {
+                    auto op = node;
+                    for (;;)
+                    {
+                        auto op2 = eval_node(op_node(op));
+                        auto parent = op_node(op->parent.lock());
+                        if (parent->value() == op_nil)
+                            return op2;
+                        parent->addRight(op2);
+                        op = parent;
+                    }
+                }
+                return eval_node(node);
+            }
+            if (value == v_int) // 叶子
+            {
+                if (!node) // 替换根
+                    root->addLeft(node = make_shared<IntegerNode>(lexer->getInt()));
+                else
+                    op_node(node)->addRight(make_shared<IntegerNode>(lexer->getInt()));
+            }
+            else if (value == v_double) // 叶子
+            {
+                if (!node) // 替换根
+                    root->addLeft(node = make_shared<DoubleNode>(lexer->getDouble()));
+                else
+                    op_node(node)->addRight(make_shared<DoubleNode>(lexer->getDouble()));
+            }
+            else if (value == v_string) // 叶子
+            {
+                if (!node) // 替换根
+                    root->addLeft(node = make_shared<StringNode>(lexer->getString()));
+                else
+                    op_node(node)->addRight(make_shared<StringNode>(lexer->getString()));
+            }
+            else if (value == v_id) // 叶子
+            {
+                if (!node) // 替换根
+                    root->addLeft(node = make_shared<IdNode>(lexer->getId()));
+                else
+                    op_node(node)->addRight(make_shared<IdNode>(lexer->getId()));
+            }
+            else if (value == v_oper) // 根
+            {
+                if (!root) // 替换根
+                    root->addLeft(node = make_shared<OperNode>(lexer->getOper()));
+                else
+                {
+                    auto op = lexer->getOper();
+                    // 此时node是子树或是叶子
+                    // 若是加减乘除等二元运算，将其移至操作符左子树
+                    // 因为二元运算的前后必是两根左右子树
+                    if (op > op_bin_begin && op < op_bin_end)
+                    {
+                        auto parent_op = op_node(node->parent.lock());
+                        // 当前结点是操作符，意味着进行到3+4的结尾
+                        // 但是要考虑优先级的情况
+                        // 如果op的优先级大于当前node的优先级，
+                        // 那么就要让node的右孩子拱手让给op
+                        // 由op构建子树成为node的右孩子
+                        if (node->type() == v_oper)
+                        {
+                            auto old_op = op_node(node);
+                            if (op > old_op->value()) //  如果当前优先级大于原先优先级
+                            {
+                                // 就要进行右孩子置换
+                                // old_op->right = new_op(left: old_op->right)
+                                auto new_op = make_shared<OperNode>(op);
+                                new_op->addLeft(old_op->right);
+                                old_op->addRight(new_op);
+                                node = new_op;
+                                // 置换好后，树变成右斜树，导致暂不可求值
+                            }
+                            else // 否则就可以先结合并求值了，哈哈
+                            {
+                                // 计算二元表达式的值
+                                auto tmp_node = eval_node(old_op);
+                                // 新建new_op的结点，其将置换原表达式
+                                auto new_op = make_shared<OperNode>(op);
+                                // 构建op的新结点，左孩子为tmp_node，等待右孩子
+                                parent_op->addLeft(new_op);
+                                new_op->addLeft(tmp_node);
+                                node = new_op;
+                            }
+                        }
+                        else
+                        {
+                            // 当前结点是叶子，那么一定是还没构建树
+                            auto new_op = make_shared<OperNode>(op);
+                            new_op->addLeft(node);
+                            parent_op->addLeft(new_op);
+                            node = new_op;
+                        }
+                    }
+                    else
+                    {
+                        throw cc_exception(string("undefined operator: ") + lexer->getValueString());
+                    }
+                }
+            }
+        }
+    }
+
+    shared_ptr<Node> CEval::eval_node(shared_ptr<Node> node)
+    {
+        auto type = node->type();
+        if (type == v_oper)
+        {
+            auto oper = op_node(node);
+            auto op = oper->value();
+            if (oper->left && oper->right) // 二元
+            {
+                auto left = eval_node(oper->left);
+                auto right = eval_node(oper->right);
+                auto max_value_type = __max(left->type(), right->type());
+                left = promote_node(left, max_value_type);
+                right = promote_node(right, max_value_type);
+                return eval_binop(op, max_value_type, left, right);
+            }
+            else if (oper->left) // 一元
+            {
+                throw cc_exception("missing value");
+            }
+            else
+            {
+                throw cc_exception("missing value");
+            }
+        }
+        if (type == v_id)
+        {
+            auto f = env.find(node->toString());
+            if (f != env.end())
+                return f->second;
+            throw cc_exception(string("undefined symbol: ") + node->toString());
+        }
+        return node;
+    }
+
+    string CEval::eval_string(shared_ptr<Node> node)
+    {
+        if (node->type() == v_oper)
+            throw cc_exception("cannot stringify op node");
+        return node->toString();
+    }
+
+    // -----------------------------
+
+    // 二元函数实现
+
+    template<class T>
+    struct eval_s
+    {
+        
+    };
+
+    template<>
+    struct eval_s<int>
+    {
+        static constexpr int eval(operator_t op, const int& left, const int& right)
+        {
+            switch (op)
+            {
+            case op_sub: return left - right;
+            case op_add: return left + right;
+            case op_mul: return left * right;
+            case op_div: return right == 0 ? throw cc_exception("divided by zero") : left / right;
+            case op_mod: return left % right;
+            default:
+                throw cc_exception("not implemented for binop int");
+            }
+        }
+    };
+
+    template<>
+    struct eval_s<double>
+    {
+        static constexpr double eval(operator_t op, const double& left, const double& right)
+        {
+            switch (op)
+            {
+            case op_sub: return left - right;
+            case op_add: return left + right;
+            case op_mul: return left * right;
+            case op_div: return right == 0.0 ? throw cc_exception("divided by zero") : left / right;
+            default:
+                throw cc_exception("not implemented for binop double");
+            }
+        }
+    };
+
+    template<>
+    struct eval_s<string>
+    {
+        static string eval(operator_t op, const string& left, const string& right)
+        {
+            switch (op)
+            {
+            case op_add: return left + right;
+            default:
+                throw cc_exception("not implemented for binop double");
+            }
+        }
+    };
+
+    template <class T> shared_ptr<Node> node_binop(operator_t op, shared_ptr<Node> __x, shared_ptr<Node> __y)
+    {
+        return make_shared<T>(eval_s<typename T::value_type>::eval(op, dynamic_pointer_cast<T>(__x)->value(), dynamic_pointer_cast<T>(__y)->value()));
+    }
+
+    // -----------------------------
+
+    shared_ptr<Node> CEval::eval_binop(operator_t op, value_t value, shared_ptr<Node> left, shared_ptr<Node> right)
+    {
+        using bin_type = function<shared_ptr<Node>(operator_t, shared_ptr<Node>, shared_ptr<Node>)>;
+        // map_binop = op_type -> value_type -> (Node -> Node -> Node)
+        static map<value_t, bin_type> map_binop = {
+            { v_int, node_binop<IntegerNode> },
+            { v_double, node_binop<DoubleNode> },
+            { v_string, node_binop<StringNode> }
+        };
+        auto f = map_binop.find(value);
+        if (f != map_binop.end())
+        {
+            return (f->second)(op, left, right);
+        }
+        throw cc_exception("undefined value type for binop");
+    }
+
+    shared_ptr<OperNode> CEval::op_node(shared_ptr<Node> node)
+    {
+        if (node->type() == v_oper)
+            return dynamic_pointer_cast<OperNode>(node);
+        throw cc_exception("cannot cast op node: " + node->toString());
+    }
+
+    shared_ptr<Node> CEval::promote_node(shared_ptr<Node> node, value_t value)
+    {
+        if (value == node->type())
+            return node;
+        if (value == v_string) // to_string
+            return make_shared<StringNode>(node->toString());
+        if (value == v_double) // to_string
+        {
+            if (node->type() == v_int)
+                return make_shared<DoubleNode>(double(dynamic_pointer_cast<IntegerNode>(node)->value()));
+            throw cc_exception(string("cannot cast string to double: " + node->toString()));
+        }
+        throw cc_exception(string("cannot cast: " + node->toString()));
+    }
+
+    value_t CEval::nextValue()
+    {
+        lexer->next();
+        while (lexer->current() == v_space)
+            lexer->next();
+        return lexer->current();
     }
 }

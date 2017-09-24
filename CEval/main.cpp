@@ -3,6 +3,8 @@
 #include "ModRmbParser.h"
 #include "CEval.h"
 
+#define TEST_PARSER
+#define TEST_RMB
 #define TEST_DOUBLE
 #define TEST_OTHER
 
@@ -13,13 +15,31 @@ int main()
 {
     try
     {
-        auto input = string("000905000234.0678");
-        cout << "Input: " << input << endl;
-        auto parser = make_shared<RmbParser>(input);
-        parser->parse();
-        cout << "Number Style: " << parser->toNumberString() << endl;
-        cout << "RMB Style: " << parser->toString() << endl;
-
+#ifdef TEST_PARSER
+        {
+            CEval eval;
+            assert(eval.eval("1") == "1");
+            assert(eval.eval("1.") == "1");
+            assert(eval.eval("1 + 2") == "3");
+            assert(eval.eval("1 -2") == "Error");
+            assert(eval.eval("1 - 2") == "-1");
+            assert(eval.eval("1 * -2") == "-2");
+            assert(eval.eval("5 / 2") == "2");
+            assert(eval.eval("5 / 0") == "Error");
+            assert(eval.eval("1 +") == "Error");
+            assert(eval.eval("e") == "Error");
+            assert(eval.eval("()") == "Error");
+            assert(eval.eval("\"") == "Error");
+            assert(eval.eval("\"aa\"") == "aa");
+            assert(eval.eval("\"aa\" + 123") == "aa123");
+            assert(eval.eval("\"aa\" + 123.4") == "aa123.4");
+            assert(eval.eval("1+ 123.4") == "124.4");
+            assert(eval.eval("1+ 4* 7") == "29");
+            //TODO: Fix bug
+            assert(eval.eval("1+ 4* 7 -6*0") == "Error");
+            assert(eval.eval("1+ 4* 7 - 6*0") == "29");
+        }
+#endif
 #ifdef TEST_DOUBLE
         { CEvalLexer lexer("123"); assert(lexer.next() == v_int); assert(lexer.getInt() == 123); }
         { CEvalLexer lexer("123."); assert(lexer.next() == v_double); assert(lexer.getDouble() == 123.0); }
@@ -58,6 +78,16 @@ int main()
         { CEvalLexer lexer("\"\\n\""); assert(lexer.next() == v_string); assert(lexer.getString() == "\n"); }
         { CEvalLexer lexer("\"\\0\""); assert(lexer.next() == v_string); assert(lexer.getString() == ""); }
         { CEvalLexer lexer("\"\\x30\\x41\\x61\""); assert(lexer.next() == v_string); assert(lexer.getString() == "0Aa"); }
+#endif
+#ifdef TEST_RMB
+        {
+            auto input = string("000905000234.0678");
+            cout << "Input: " << input << endl;
+            auto parser = make_shared<RmbParser>(input);
+            parser->parse();
+            cout << "Number Style: " << parser->toNumberString() << endl;
+            cout << "RMB Style: " << parser->toString() << endl;
+        }
 #endif
     }
     catch (cc_exception& e) {
