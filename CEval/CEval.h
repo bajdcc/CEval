@@ -161,6 +161,8 @@ namespace cc_eval
         shared_ptr<Node> left, right;
         void addLeft(shared_ptr<Node> child);
         void addRight(shared_ptr<Node> child);
+        shared_ptr<OperNode> assertLeftNull(string msg);
+        shared_ptr<OperNode> assertRightNull(string msg);
     };
 
     /**
@@ -185,5 +187,7 @@ namespace cc_eval
         shared_ptr<OperNode> op_node(shared_ptr<Node> node);
         shared_ptr<Node> promote_node(shared_ptr<Node> node, value_t value);
         value_t nextValue();
+    private:
+        static int calc_binop_prior(operator_t op);
     };
 }

@@ -457,6 +457,18 @@ namespace cc_eval
         child->parent = shared_from_this();
     }
 
+    shared_ptr<OperNode> OperNode::assertLeftNull(string msg)
+    {
+        if (left) throw cc_exception(msg);
+        return shared_from_this();
+    }
+
+    shared_ptr<OperNode> OperNode::assertRightNull(string msg)
+    {
+        if (right) throw cc_exception(msg);
+        return shared_from_this();
+    }
+
     CEval::CEval()
     {
     }
@@ -513,28 +525,32 @@ namespace cc_eval
                 if (!node) // 替换根
                     root->addLeft(node = make_shared<IntegerNode>(lexer->getInt()));
                 else
-                    op_node(node)->addRight(make_shared<IntegerNode>(lexer->getInt()));
+                    op_node(node)->assertRightNull(string("required op but found int: ") + lexer->getValueString())
+                    ->addRight(make_shared<IntegerNode>(lexer->getInt()));
             }
             else if (value == v_double) // 叶子
             {
                 if (!node) // 替换根
                     root->addLeft(node = make_shared<DoubleNode>(lexer->getDouble()));
                 else
-                    op_node(node)->addRight(make_shared<DoubleNode>(lexer->getDouble()));
+                    op_node(node)->assertRightNull(string("required op but found double: ") + lexer->getValueString())
+                    ->addRight(make_shared<DoubleNode>(lexer->getDouble()));
             }
             else if (value == v_string) // 叶子
             {
                 if (!node) // 替换根
                     root->addLeft(node = make_shared<StringNode>(lexer->getString()));
                 else
-                    op_node(node)->addRight(make_shared<StringNode>(lexer->getString()));
+                    op_node(node)->assertRightNull(string("required op but found string: ") + lexer->getValueString())
+                    ->addRight(make_shared<StringNode>(lexer->getString()));
             }
             else if (value == v_id) // 叶子
             {
                 if (!node) // 替换根
                     root->addLeft(node = make_shared<IdNode>(lexer->getId()));
                 else
-                    op_node(node)->addRight(make_shared<IdNode>(lexer->getId()));
+                    op_node(node)->assertRightNull(string("required op but found id: ") + lexer->getValueString())
+                    ->addRight(make_shared<IdNode>(lexer->getId()));
             }
             else if (value == v_oper) // 根
             {
@@ -557,8 +573,9 @@ namespace cc_eval
                         if (node->type() == v_oper)
                         {
                             auto old_op = op_node(node);
-                            if (op > old_op->value()) //  如果当前优先级大于原先优先级
+                            if (calc_binop_prior(op) > calc_binop_prior(old_op->value())) //  如果当前优先级大于原先优先级
                             {
+                                // 抢走原树的右孩子！
                                 // 就要进行右孩子置换
                                 // old_op->right = new_op(left: old_op->right)
                                 auto new_op = make_shared<OperNode>(op);
@@ -569,12 +586,13 @@ namespace cc_eval
                             }
                             else // 否则就可以先结合并求值了，哈哈
                             {
+                                // 如果不马上简化树，这个树就变复杂了哈~
                                 // 计算二元表达式的值
                                 auto tmp_node = eval_node(old_op);
                                 // 新建new_op的结点，其将置换原表达式
                                 auto new_op = make_shared<OperNode>(op);
                                 // 构建op的新结点，左孩子为tmp_node，等待右孩子
-                                parent_op->addLeft(new_op);
+                                parent_op->addRight(new_op);
                                 new_op->addLeft(tmp_node);
                                 node = new_op;
                             }
@@ -750,5 +768,15 @@ namespace cc_eval
         while (lexer->current() == v_space)
             lexer->next();
         return lexer->current();
+    }
+
+    int CEval::calc_binop_prior(operator_t op)
+    {
+        vector<int> prior = { 1, 1, 2, 2, 2 };
+        if (op > op_bin_begin && op < op_bin_end)
+        {
+            return prior.at(op - op_bin_begin - 1);
+        }
+        throw cc_exception("undefined binop priority");
     }
 }

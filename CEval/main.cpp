@@ -35,9 +35,10 @@ int main()
             assert(eval.eval("\"aa\" + 123.4") == "aa123.4");
             assert(eval.eval("1+ 123.4") == "124.4");
             assert(eval.eval("1+ 4* 7") == "29");
-            //TODO: Fix bug
             assert(eval.eval("1+ 4* 7 -6*0") == "Error");
             assert(eval.eval("1+ 4* 7 - 6*0") == "29");
+            assert(eval.eval("1+ 4* 7 - 6*") == "Error");
+            assert(eval.eval("1+ 4* 7 * -2 / 2 - -3* -3 *-3") == "0");
         }
 #endif
 #ifdef TEST_DOUBLE
