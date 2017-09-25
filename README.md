@@ -1,6 +1,9 @@
 # 四则运算器（C++）
 
-[知乎专栏](https://zhuanlan.zhihu.com/p/29589948)
+[知乎专栏](https://zhuanlan.zhihu.com/p/29589948) 
+[知乎专栏](https://zhuanlan.zhihu.com/p/29632312)
+
+[Dev-Cpp精简版代码](https://github.com/bajdcc/learnstl/tree/master/projects/calc)
 
 看到[https://github.com/JosanSun/DesignPattern](https://github.com/JosanSun/DesignPattern)，有了些灵感，因为最近把jMiniLang玩得差不多了，有点腻了。
 

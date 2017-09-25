@@ -630,6 +630,17 @@ namespace cc_eval
                     }
                     else if (op == op_lpa) // 左括号，入栈，保存现场
                     {
+                        // 先保证语法正确，如果是3(4+6)就要报错，但(1+2)不会
+                        if (node)
+                        {
+                            if (node->type() == v_oper)
+                            {
+                                if (op_node(node)->right) // 表达式已完整，即1+2(3+4)，此时也报错
+                                    throw cc_exception("required op but found (");
+                            }
+                            else // 3(4+6)，括号前是值的话肯定有错
+                                throw cc_exception("required op but found (");
+                        }
                         rootStack.push_back(root);
                         nodeStack.push_back(node);
                         root = make_shared<OperNode>(op_nil);

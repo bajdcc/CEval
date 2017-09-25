@@ -49,6 +49,8 @@ int main()
             assert(eval.eval_output("1+ 4* (7 * 1 - 1)") == "25");
             assert(eval.eval_output("1+ 4* (7 * 1 - 1) - 6* (0 + 1) /2 + 3") == "25"); 
             assert(eval.eval_output("(3 + 6)*(8 - -1)") == "81");
+            assert(eval.eval_output("3(4+4)") == "Error");
+            assert(eval.eval_output("3+4+-6(4+4)") == "Error");
             //TODO: need more test!!!
         }
 #endif
